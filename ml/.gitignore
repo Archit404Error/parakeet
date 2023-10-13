@@ -1,0 +1,7 @@
+gec_data/
+gec_data.zip
+data.csv
+gec_data_truncated.csv
+gec_out/
+gec_model_final/
+.ipynb_checkpoints/
