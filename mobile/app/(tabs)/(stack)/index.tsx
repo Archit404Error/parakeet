@@ -5,12 +5,19 @@ import { useState } from "react";
 import { Button, StyleSheet } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { Text, View } from "../../../components/Themed";
+import { API_URL } from "../../../constants";
 
 export default function RecordingScreen() {
+  interface ConversationContext {
+    role: string;
+    content: string;
+  }
+
   const [audio, setAudio] = useState<Audio.Recording>();
   const [isRecording, setIsRecording] = useState(false);
   const [transcribed, setTranscribed] = useState("");
   const [corrected, setCorrected] = useState("");
+  const [context, setContext] = useState<ConversationContext[]>([]);
 
   const startRecording = async () => {
     await Audio.requestPermissionsAsync();
@@ -46,16 +53,35 @@ export default function RecordingScreen() {
       type: `audio/${filetype}`,
     });
 
-    const res = await fetch(
-      "https://d78b-24-213-201-201.ngrok-free.app/process-audio",
-      {
-        method: "POST",
-        body: uploadData,
-      }
-    );
+    const res = await fetch(`${API_URL}/process-audio`, {
+      method: "POST",
+      body: uploadData,
+    });
     const resJson = await res.json();
     setTranscribed(resJson.transcribed);
     setCorrected(resJson.corrected);
+
+    let updatedContext = [
+      ...context,
+      { role: "user", content: resJson.corrected },
+    ];
+
+    const completionRes = await fetch(`${API_URL}/autocomplete`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ context: updatedContext }),
+    });
+
+    const completionJson = await completionRes.json();
+    updatedContext.push({
+      role: "assistant",
+      content: completionJson.autocompletion,
+    });
+
+    setContext(updatedContext);
+    console.log(updatedContext);
   };
 
   return (
@@ -73,6 +99,16 @@ export default function RecordingScreen() {
         darkColor="rgba(255,255,255,0.1)"
       />
       {corrected && <Text style={styles.title}>Corrected: {corrected}</Text>}
+      <View
+        style={styles.separator}
+        lightColor="#eee"
+        darkColor="rgba(255,255,255,0.1)"
+      />
+      {context.length > 0 && (
+        <Text style={styles.title}>
+          Response: {context[context.length - 1].content}
+        </Text>
+      )}
       <TouchableOpacity onPress={isRecording ? stopRecording : startRecording}>
         <FontAwesome
           name={isRecording ? "stop" : "microphone"}
