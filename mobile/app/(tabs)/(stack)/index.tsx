@@ -1,22 +1,28 @@
 import { FontAwesome } from "@expo/vector-icons";
 import { Audio } from "expo-av";
-import { Link } from "expo-router";
 import { useState } from "react";
-import { Button, StyleSheet } from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
-import { Text, View } from "../../../components/Themed";
+import { SafeAreaView, StyleSheet } from "react-native";
+import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
+import { View } from "../../../components/Themed";
+import { AssistantMessage } from "../../../components/chat/AssistantMessage";
+import { UserMessage } from "../../../components/chat/UserMessage";
 import { API_URL } from "../../../constants";
 
 export default function RecordingScreen() {
+  enum Role {
+    USER = "user",
+    ASSISTANT = "assistant",
+  }
+
   interface ConversationContext {
-    role: string;
+    role: Role;
     content: string;
   }
 
   const [audio, setAudio] = useState<Audio.Recording>();
   const [isRecording, setIsRecording] = useState(false);
-  const [transcribed, setTranscribed] = useState("");
-  const [corrected, setCorrected] = useState("");
+  const [transcribed, setTranscribed] = useState<string[]>([]);
+  const [corrected, setCorrected] = useState<string[]>([]);
   const [context, setContext] = useState<ConversationContext[]>([]);
 
   const startRecording = async () => {
@@ -58,12 +64,12 @@ export default function RecordingScreen() {
       body: uploadData,
     });
     const resJson = await res.json();
-    setTranscribed(resJson.transcribed);
-    setCorrected(resJson.corrected);
+    setTranscribed([...transcribed, resJson.transcribed]);
+    setCorrected([...corrected, resJson.corrected]);
 
     let updatedContext = [
       ...context,
-      { role: "user", content: resJson.corrected },
+      { role: Role.USER, content: resJson.corrected },
     ];
 
     const completionRes = await fetch(`${API_URL}/autocomplete`, {
@@ -76,49 +82,51 @@ export default function RecordingScreen() {
 
     const completionJson = await completionRes.json();
     updatedContext.push({
-      role: "assistant",
+      role: Role.ASSISTANT,
       content: completionJson.autocompletion,
     });
 
     setContext(updatedContext);
-    console.log(updatedContext);
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Record Audio</Text>
+      <SafeAreaView style={{ flex: 1 }}>
+        <ScrollView style={styles.chatScrollContainer}>
+          {context.map((message, idx) =>
+            message.role == Role.USER ? (
+              <UserMessage
+                key={`userMessage${idx}`}
+                message={`Original: ${
+                  transcribed[Math.floor(idx / 2)]
+                }\n\nCorrected: ${message.content}`}
+              />
+            ) : (
+              <AssistantMessage
+                key={`aiMessage${idx}`}
+                message={message.content}
+              />
+            )
+          )}
+        </ScrollView>
+      </SafeAreaView>
       <View
         style={styles.separator}
         lightColor="#eee"
         darkColor="rgba(255,255,255,0.1)"
       />
-      {transcribed && <Text style={styles.title}>Original: {transcribed}</Text>}
-      <View
-        style={styles.separator}
-        lightColor="#eee"
-        darkColor="rgba(255,255,255,0.1)"
-      />
-      {corrected && <Text style={styles.title}>Corrected: {corrected}</Text>}
-      <View
-        style={styles.separator}
-        lightColor="#eee"
-        darkColor="rgba(255,255,255,0.1)"
-      />
-      {context.length > 0 && (
-        <Text style={styles.title}>
-          Response: {context[context.length - 1].content}
-        </Text>
-      )}
-      <TouchableOpacity onPress={isRecording ? stopRecording : startRecording}>
-        <FontAwesome
-          name={isRecording ? "stop" : "microphone"}
-          size={30}
-          color="white"
-        />
-      </TouchableOpacity>
-      <Link href="/stacked" asChild>
-        <Button title="Press to stack screen" />
-      </Link>
+      <View style={{ flex: 1 }}>
+        <TouchableOpacity
+          onPress={isRecording ? stopRecording : startRecording}
+        >
+          <FontAwesome
+            name={isRecording ? "stop" : "microphone"}
+            size={100}
+            color="white"
+            style={isRecording ? styles.stopRecording : styles.startRecording}
+          />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -137,5 +145,22 @@ const styles = StyleSheet.create({
     marginVertical: 30,
     height: 1,
     width: "80%",
+  },
+  chatScrollContainer: {
+    padding: 5,
+  },
+  startRecording: {
+    alignSelf: "center",
+    backgroundColor: "orange",
+    overflow: "hidden",
+    borderRadius: 15,
+    padding: 20,
+  },
+  stopRecording: {
+    alignSelf: "center",
+    backgroundColor: "red",
+    overflow: "hidden",
+    borderRadius: 15,
+    padding: 20,
   },
 });
