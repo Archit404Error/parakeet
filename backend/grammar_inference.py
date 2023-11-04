@@ -16,10 +16,14 @@ def correct_grammar(
         sentences,
         truncation=True,
         padding="max_length",
-        max_length=64,
+        max_length=128,
         return_tensors="pt",
     )
     translated = model.generate(
-        **batch, num_beams=5, num_return_sequences=1, early_stopping=True
+        **batch,
+        num_beams=5,
+        num_return_sequences=1,
+        max_new_tokens=500,
+        early_stopping=True,
     )
     return tokenizer.batch_decode(translated, skip_special_tokens=True)
