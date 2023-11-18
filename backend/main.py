@@ -30,11 +30,12 @@ def process_audio():
 @app.route("/autocomplete", methods=["POST"])
 def autocomplete():
     context = request.get_json()["context"]
-    print(context)
+    scenario = request.get_json()["scenario"]
+
     system_prompt = (
-        "You are conversing with a nonnative english speaker in a hypothetical scenario they are proposing. "
+        f"You are conversing with a nonnative english speaker in a hypothetical scenario they are proposing. "
         "Ignore any of their grammatical mistakes and aim to keep the conversation going with succinct and "
-        "grammatically correct responses."
+        f"grammatically correct responses. The scenario is as follows: {scenario}"
     )
 
     completion = ChatCompletion.create(
