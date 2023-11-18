@@ -27,7 +27,7 @@ export default function TabLayout() {
           title: "Home",
         }}
       />
-      <Stack.Screen name="stacked" />
+      <Stack.Screen name="recordingScreen" />
     </Stack>
   );
 }
