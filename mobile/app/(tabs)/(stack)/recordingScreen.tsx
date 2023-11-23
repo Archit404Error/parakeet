@@ -31,6 +31,7 @@ export default function RecordingScreen() {
   const [conversationTimeSeconds, setConversationTimeSeconds] =
     useState<number>();
   const [audio, setAudio] = useState<Audio.Recording>();
+  const [sound, setSound] = useState<Audio.Sound>();
   const [isRecording, setIsRecording] = useState(false);
   const [transcribed, setTranscribed] = useState<string[]>([]);
   const [corrected, setCorrected] = useState<string[]>([]);
@@ -114,14 +115,16 @@ export default function RecordingScreen() {
 
     setContext(updatedContext);
 
-    await playFromPath("output.mp3");
+    await playAudio();
   };
 
-  async function playFromPath(path: string) {
+  async function playAudio() {
     try {
-      const soundObject = new Audio.Sound();
-      await soundObject.loadAsync({ uri: path });
-      await soundObject.playAsync();
+      const { sound } = await Audio.Sound.createAsync(
+        require("../../../output.mp3")
+      );
+      setSound(sound);
+      await sound.playAsync();
     } catch (error) {
       console.log("An error occurred while playing the audio:", error);
     }
