@@ -87,7 +87,19 @@ export default function RecordingScreen() {
     });
 
     setContext(updatedContext);
+
+    await playFromPath("output.mp3");
   };
+
+  async function playFromPath(path: string) {
+    try {
+      const soundObject = new Audio.Sound();
+      await soundObject.loadAsync({ uri: path });
+      await soundObject.playAsync();
+    } catch (error) {
+      console.log("An error occurred while playing the audio:", error);
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -153,14 +165,14 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     backgroundColor: "orange",
     overflow: "hidden",
-    borderRadius: 15,
+    borderRadius: 50,
     padding: 20,
   },
   stopRecording: {
     alignSelf: "center",
     backgroundColor: "red",
     overflow: "hidden",
-    borderRadius: 15,
+    borderRadius: 50,
     padding: 20,
   },
 });

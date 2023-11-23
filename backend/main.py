@@ -3,13 +3,12 @@ from flask_cors import CORS
 
 from grammar_inference import load_gec_models, correct_grammar
 from whisper_inference import transcribe_audio
-from openai import ChatCompletion
+from openai import ChatCompletion, OpenAI
 from dotenv import load_dotenv
 
 app = Flask(__name__)
 cors = CORS(app)
 load_dotenv()
-
 
 @app.route("/correct-grammar", methods=["POST"])
 def grammar_correction():
@@ -42,7 +41,15 @@ def autocomplete():
         messages=[{"role": "system", "content": system_prompt}, *context],
     )
 
-    return jsonify({"autocompletion": completion.choices[0].message.content})
+    message = completion.choices[0].message.content
+    audio_response = OpenAI.audio.speech.create(
+        model="tts-1",
+        voice="alloy",
+        input=message,
+    )
+    audio_response.stream_to_file("../mobile/output.mp3")
+
+    return jsonify({"autocompletion": message})
 
 
 if __name__ == "__main__":
