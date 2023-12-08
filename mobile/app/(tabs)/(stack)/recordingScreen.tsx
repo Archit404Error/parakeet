@@ -1,17 +1,19 @@
 import { FontAwesome } from "@expo/vector-icons";
 import { Audio } from "expo-av";
-import { useLocalSearchParams } from "expo-router";
+import * as FileSystem from "expo-file-system";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { SafeAreaView, StyleSheet, Text } from "react-native";
+import { SafeAreaView, Text } from "react-native";
 import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
 import { View } from "../../../components/Themed";
 import { AssistantMessage } from "../../../components/chat/AssistantMessage";
 import { UserMessage } from "../../../components/chat/UserMessage";
 import { API_URL } from "../../../constants";
-import { textStyles } from "../../../styles/textStyles";
-import { viewStyles } from "../../../styles/viewStyles";
+import { styles } from "../../../styles/screenStyles";
 
 export default function RecordingScreen() {
+  const router = useRouter();
+
   interface recordingSearchParams {
     prompt: string;
     selectedTime: number;
@@ -31,6 +33,7 @@ export default function RecordingScreen() {
   const [conversationTimeSeconds, setConversationTimeSeconds] =
     useState<number>();
   const [audio, setAudio] = useState<Audio.Recording>();
+  const [sound, setSound] = useState<Audio.Sound>();
   const [isRecording, setIsRecording] = useState(false);
   const [transcribed, setTranscribed] = useState<string[]>([]);
   const [corrected, setCorrected] = useState<string[]>([]);
@@ -113,25 +116,60 @@ export default function RecordingScreen() {
     });
 
     setContext(updatedContext);
+
+    await playAudio(completionJson.autocompletion);
+  };
+
+  const playAudio = async (message: string) => {
+    const res = await fetch(`${API_URL}/text-to-speech`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message }),
+    });
+
+    const resJson = await res.json();
+    let uri = FileSystem.documentDirectory + "whisper_audio.mp3";
+    await FileSystem.writeAsStringAsync(uri, resJson.audio, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    const playbackObj = new Audio.Sound();
+    await playbackObj.loadAsync({ uri });
+    await playbackObj.playAsync();
+  };
+
+  const handleEndPractice = () => {
+    router.push({
+      pathname: "/feedbackScreen",
+      params: {},
+    });
   };
 
   return (
     <View style={styles.container}>
-      <View style={viewStyles.floatingBubbleView}>
-        <Text style={textStyles.bodyText}>Prompt: {prompt}</Text>
-      </View>
-      <View style={viewStyles.floatingBubbleView}>
-        <Text style={textStyles.bodyText}>
-          {conversationTimeSeconds} seconds remaining
-        </Text>
-      </View>
+      <Text style={{ ...styles.sectionDetailText, marginBottom: 10 }}>
+        Prompt: {prompt}
+      </Text>
+      <Text
+        style={{
+          ...styles.labelText,
+          textAlign: "center",
+          marginTop: 10,
+          marginBottom: 20,
+        }}
+      >
+        {conversationTimeSeconds! > 0
+          ? `${conversationTimeSeconds} seconds remaining`
+          : "Times up! Wrap up your conversation now..."}
+      </Text>
       <SafeAreaView style={{ flex: 2 }}>
         <ScrollView
           ref={messageScrollViewRef}
           onContentSizeChange={() =>
             messageScrollViewRef.current?.scrollToEnd({ animated: true })
           }
-          style={styles.chatScrollContainer}
+          style={{ ...styles.chatScrollContainer, backgroundColor: "#FFF" }}
         >
           {context.map((message, idx) =>
             message.role == Role.USER ? (
@@ -150,58 +188,22 @@ export default function RecordingScreen() {
           )}
         </ScrollView>
       </SafeAreaView>
-      <View
-        style={styles.separator}
-        lightColor="#eee"
-        darkColor="rgba(255,255,255,0.1)"
-      />
-      <View style={{ flex: 1 }}>
-        <TouchableOpacity
-          onPress={isRecording ? stopRecording : startRecording}
-        >
-          <FontAwesome
-            name={isRecording ? "stop" : "microphone"}
-            size={100}
-            color="white"
-            style={isRecording ? styles.stopRecording : styles.startRecording}
-          />
-        </TouchableOpacity>
-      </View>
+      <View style={{ ...styles.separator, backgroundColor: "#DDD" }} />
+      <TouchableOpacity
+        onPress={isRecording ? stopRecording : startRecording}
+        style={{ backgroundColor: "white", borderRadius: 50 }}
+      >
+        <FontAwesome
+          name={isRecording ? "stop" : "microphone"}
+          size={80}
+          color="white"
+          style={isRecording ? styles.stopRecording : styles.startRecording}
+        />
+      </TouchableOpacity>
+      <View style={{ ...styles.separator, width: 0, marginVertical: 10 }} />
+      <TouchableOpacity style={styles.button} onPress={handleEndPractice}>
+        <Text style={styles.buttonText}>End Practice {" > "}</Text>
+      </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: "80%",
-  },
-  chatScrollContainer: {
-    padding: 5,
-  },
-  startRecording: {
-    alignSelf: "center",
-    backgroundColor: "orange",
-    overflow: "hidden",
-    borderRadius: 15,
-    padding: 20,
-  },
-  stopRecording: {
-    alignSelf: "center",
-    backgroundColor: "red",
-    overflow: "hidden",
-    borderRadius: 15,
-    padding: 20,
-  },
-});

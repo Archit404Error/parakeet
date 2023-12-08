@@ -24,10 +24,11 @@ export default function TabLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: "Home",
+          title: "Conversation",
         }}
       />
       <Stack.Screen name="recordingScreen" />
+      <Stack.Screen name="feedbackScreen" />
     </Stack>
   );
 }

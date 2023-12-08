@@ -24,7 +24,7 @@ multidict==6.0.4
 networkx==3.2.1
 numba==0.58.1
 numpy==1.26.1
-openai==0.28.1
+openai==1.2.0
 openai-whisper==20230918
 packaging==23.2
 python-dotenv==1.0.0

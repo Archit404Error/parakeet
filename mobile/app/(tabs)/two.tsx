@@ -5,7 +5,7 @@ import { Text, View } from "../../components/Themed";
 export default function TabTwoScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tab Two</Text>
+      <Text style={styles.title}>Speech practice feature coming soon!</Text>
       <View
         style={styles.separator}
         lightColor="#eee"
@@ -22,7 +22,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   title: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: "bold",
   },
   separator: {
