@@ -1,15 +1,19 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+import tempfile
+import base64
 
-from grammar_inference import load_gec_models, correct_grammar
-from whisper_inference import transcribe_audio
-from openai import OpenAI
 from dotenv import load_dotenv
+from flask import Flask, jsonify, request, send_file
+from flask_cors import CORS
+from openai import OpenAI
+
+from grammar_inference import correct_grammar, load_gec_models
+from whisper_inference import transcribe_audio
 
 app = Flask(__name__)
 cors = CORS(app)
 load_dotenv()
 client = OpenAI()
+
 
 @app.route("/correct-grammar", methods=["POST"])
 def grammar_correction():
@@ -44,14 +48,20 @@ def autocomplete():
     )
 
     message = completion.choices[0].message.content
-    audio_response = client.audio.speech.create(
-        model="tts-1",
-        voice="alloy",
-        input=message,
-    )
-    audio_response.stream_to_file("../mobile/output.mp3")
 
     return jsonify({"autocompletion": message})
+
+
+@app.route("/text-to-speech", methods=["POST"])
+def tts():
+    message = request.get_json()["message"]
+    audio_response = client.audio.speech.create(
+        model="tts-1", voice="alloy", input=message, response_format="mp3"
+    )
+
+    audio_encoded = base64.b64encode(audio_response.response.content).decode("utf-8")
+
+    return jsonify({"audio": audio_encoded})
 
 
 if __name__ == "__main__":

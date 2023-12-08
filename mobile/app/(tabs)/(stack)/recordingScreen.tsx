@@ -1,5 +1,6 @@
 import { FontAwesome } from "@expo/vector-icons";
 import { Audio } from "expo-av";
+import * as FileSystem from "expo-file-system";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { SafeAreaView, Text } from "react-native";
@@ -116,20 +117,27 @@ export default function RecordingScreen() {
 
     setContext(updatedContext);
 
-    await playAudio();
+    await playAudio(completionJson.autocompletion);
   };
 
-  async function playAudio() {
-    try {
-      const { sound } = await Audio.Sound.createAsync(
-        require("../../../output.mp3")
-      );
-      setSound(sound);
-      await sound.playAsync();
-    } catch (error) {
-      console.log("An error occurred while playing the audio:", error);
-    }
-  }
+  const playAudio = async (message: string) => {
+    const res = await fetch(`${API_URL}/text-to-speech`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message }),
+    });
+
+    const resJson = await res.json();
+    let uri = FileSystem.documentDirectory + "whisper_audio.mp3";
+    await FileSystem.writeAsStringAsync(uri, resJson.audio, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    const playbackObj = new Audio.Sound();
+    await playbackObj.loadAsync({ uri });
+    await playbackObj.playAsync();
+  };
 
   const handleEndPractice = () => {
     router.push({
