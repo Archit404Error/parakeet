@@ -72,6 +72,7 @@ export default function FeedbackScreen() {
         style={styles.lottie}
         resizeMode="cover"
       />
+      <View style={{ ...styles.separator, width: 0, marginVertical: 4 }} />
       <TouchableOpacity style={styles.button} onPress={triggerConfetti}>
         <Text style={styles.buttonText}>Celebrate!</Text>
       </TouchableOpacity>

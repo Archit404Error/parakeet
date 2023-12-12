@@ -1,7 +1,7 @@
 import { FontAwesome } from "@expo/vector-icons";
 import { Audio } from "expo-av";
 import * as FileSystem from "expo-file-system";
-import { useLocalSearchParams, useNavigation } from "expo-router";
+import { useLocalSearchParams, useRouter, useNavigation } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { SafeAreaView, Text } from "react-native";
 import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
@@ -32,6 +32,7 @@ export const playAudio = async (message: string) => {
 };
 
 export default function RecordingScreen() {
+  const router = useRouter();
   const navigation = useNavigation();
 
   interface recordingSearchParams {
@@ -143,7 +144,9 @@ export default function RecordingScreen() {
   const content: string[] = context.map((message) => String(message.content));
 
   const handleEndPractice = () => {
-    navigation.navigate("feedbackScreen", { content });
+    if (content.length > 0) {
+      navigation.navigate("feedbackScreen", { content });
+    }
   };
 
   return (
