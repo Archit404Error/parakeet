@@ -56,8 +56,8 @@ export const styles = StyleSheet.create({
   },
   errorText: {
     color: "red",
-    fontSize: 16,
-    marginTop: 20,
+    fontSize: 14,
+    marginTop: 24,
     fontFamily: "Helvetica Neue",
   },
   presetPromptBox: {
@@ -100,5 +100,16 @@ export const styles = StyleSheet.create({
     overflow: "hidden",
     borderRadius: 15,
     padding: 20,
+  },
+
+  // feedback screen
+  lottie: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
+    pointerEvents: "none",
   },
 });

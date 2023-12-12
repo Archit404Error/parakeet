@@ -59,8 +59,14 @@ export default function RecordingOptionsScreen() {
             <Text style={styles.presetPromptText}>{presetPrompt}</Text>
           </TouchableOpacity>
         ))}
-        <View style={{ ...styles.separator, width: 0 }} />
-        <Text style={styles.labelText}>Conversation Type</Text>
+        {errorShown ? (
+          <Text style={styles.errorText}>
+            Please set a prompt and time to begin session!
+          </Text>
+        ) : (
+          <View style={{ ...styles.separator, width: 0 }} />
+        )}
+        <Text style={styles.labelText}>Conversation Details</Text>
         <TextInput
           placeholder="Write your prompt here..."
           maxLength={200}
@@ -88,11 +94,6 @@ export default function RecordingOptionsScreen() {
         <TouchableOpacity style={styles.button} onPress={handleSubmit}>
           <Text style={styles.buttonText}>Begin Session</Text>
         </TouchableOpacity>
-        {errorShown && (
-          <Text style={styles.errorText}>
-            Please set a prompt and time before submitting!
-          </Text>
-        )}
       </View>
     </TouchableWithoutFeedback>
   );
