@@ -6,3 +6,8 @@ gec_val_data.csv
 gec_out/
 gec_model_final/
 .ipynb_checkpoints/
+.idea/
+*.json
+*.pickle
+*.csv
+hyperparam_out/
