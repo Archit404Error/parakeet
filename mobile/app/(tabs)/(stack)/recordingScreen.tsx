@@ -1,7 +1,7 @@
 import { FontAwesome } from "@expo/vector-icons";
 import { Audio } from "expo-av";
 import * as FileSystem from "expo-file-system";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { SafeAreaView, Text } from "react-native";
 import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
@@ -10,9 +10,29 @@ import { AssistantMessage } from "../../../components/chat/AssistantMessage";
 import { UserMessage } from "../../../components/chat/UserMessage";
 import { API_URL } from "../../../constants";
 import { styles } from "../../../styles/screenStyles";
+import React from "react";
+
+export const playAudio = async (message: string) => {
+  const res = await fetch(`${API_URL}/text-to-speech`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ message }),
+  });
+
+  const resJson = await res.json();
+  let uri = FileSystem.documentDirectory + "whisper_audio.mp3";
+  await FileSystem.writeAsStringAsync(uri, resJson.audio, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  const playbackObj = new Audio.Sound();
+  await playbackObj.loadAsync({ uri });
+  await playbackObj.playAsync();
+};
 
 export default function RecordingScreen() {
-  const router = useRouter();
+  const navigation = useNavigation();
 
   interface recordingSearchParams {
     prompt: string;
@@ -33,7 +53,6 @@ export default function RecordingScreen() {
   const [conversationTimeSeconds, setConversationTimeSeconds] =
     useState<number>();
   const [audio, setAudio] = useState<Audio.Recording>();
-  const [sound, setSound] = useState<Audio.Sound>();
   const [isRecording, setIsRecording] = useState(false);
   const [transcribed, setTranscribed] = useState<string[]>([]);
   const [corrected, setCorrected] = useState<string[]>([]);
@@ -44,6 +63,7 @@ export default function RecordingScreen() {
 
   useEffect(() => {
     setPrompt(searchParams.prompt);
+    setContext([]);
     setConversationTimeSeconds(searchParams.selectedTime);
     const timerIntervalId = setInterval(() => {
       setConversationTimeSeconds(
@@ -120,30 +140,10 @@ export default function RecordingScreen() {
     await playAudio(completionJson.autocompletion);
   };
 
-  const playAudio = async (message: string) => {
-    const res = await fetch(`${API_URL}/text-to-speech`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ message }),
-    });
-
-    const resJson = await res.json();
-    let uri = FileSystem.documentDirectory + "whisper_audio.mp3";
-    await FileSystem.writeAsStringAsync(uri, resJson.audio, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-    const playbackObj = new Audio.Sound();
-    await playbackObj.loadAsync({ uri });
-    await playbackObj.playAsync();
-  };
+  const content: string[] = context.map((message) => String(message.content));
 
   const handleEndPractice = () => {
-    router.push({
-      pathname: "/feedbackScreen",
-      params: {},
-    });
+    navigation.navigate("feedbackScreen", { content });
   };
 
   return (
