@@ -71,7 +71,7 @@ The Expo dev server should begin running locally, and you should be able to down
 ## Screenshots
 | Session Start | Practice Session |
 |---|---|
-| ![](./assets/screenshots/app_home_screenshot.png)  |  ![](./assets/screenshots/app_home_screenshot.png)  |
+| ![](./assets/screenshots/app_home_screenshot.png)  |  ![](./assets/screenshots/app_practice_screenshot.png)  |
 
 ## Extensions
 
